@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman Clone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 320px;
+            --sidebar-collapsed-width: 50px;
+            --primary-color: #FF6C37;
+            --bg-color: #1a1a1a;
+            --secondary-bg: #2d2d2d;
+            --border-color: #3d3d3d;
+            --text-color: #e1e1e1;
+            --text-secondary: #a1a1a1;
+            --hover-color: #363636;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 1rem 1rem 1rem calc(var(--sidebar-width) + 1rem);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .new-collection-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Scrollbar Styles */
+        .sidebar-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Collection and Request Styles */
+        .collection-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .collection-header {
+            padding: 0.5rem;
+            border-radius: 4px;
+            background-color: var(--secondary-bg);
+            margin-bottom: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .collection-header:hover {
+            background-color: var(--hover-color);
+        }
+
+        .request-list {
+            margin-left: 1rem;
+            padding-left: 0.5rem;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .collections-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .collection-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .collection-name {
+            margin-left: 0.5rem;
+            flex: 1;
+        }
+
+        .collection-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.2rem 0.4rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .action-btn:hover {
+            color: var(--text-color);
+        }
+
+        .request-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 0.3rem;
+            background-color: var(--secondary-bg);
+            position: relative;
+        }
+
+        .request-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .request-item:hover .delete-request-btn {
+            opacity: 1;
+        }
+
+        .delete-request-btn {
+            padding: 0.3rem 0.5rem;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .delete-request-btn:hover {
+            background-color: #c82333;
+        }
+
+        .request-name {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .request-panel {
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .url-section {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-select {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .send-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .send-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            margin: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--text-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1rem 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .key-value-pairs {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .key-value-pair {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .key-value-pair input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .remove-pair {
+            padding: 0.5rem;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-pair {
+            padding: 0.5rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .response-panel {
+            margin-top: 1rem;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .response-status {
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .response-status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .response-status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .response-body {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            color: var(--text-color);
+        }
+
+        #requestBody {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .auth-container {
+            padding: 1rem 0;
+        }
+        
+        .auth-selector {
+            margin-bottom: 1.5rem;
+        }
+        
+        .auth-selector select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin-left: 0.5rem;
+        }
+        
+        .auth-field {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .auth-field label {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .auth-field input, .auth-field select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .auth-method-container {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="new-collection-btn" onclick="createNewCollection()">New Collection</button>
+        </div>
+        <div class="sidebar-content">
+            <h2 class="collections-title">Collections</h2>
+            <ul class="collection-list" id="collectionList"></ul>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="request-panel">
+            <div class="url-section">
+                <select class="method-select" id="methodSelect">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="PATCH">PATCH</option>
+                </select>
+                <input type="text" class="url-input" id="urlInput" placeholder="Enter request URL">
+                <button class="send-btn" onclick="sendRequest()">Send</button>
+                <button class="send-btn" style="background-color: #28a745;" onclick="saveRequest()">Save</button>
+                <button class="send-btn" style="background-color: #0066cc;" onclick="updateRequest()">Update</button>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(event, 'headers')">Headers</div>
+                <div class="tab" onclick="switchTab(event, 'auth')">Auth</div>
+                <div class="tab" onclick="switchTab(event, 'body')">Body</div>
+            </div>
+            <div id="headers" class="tab-content active">
+                <div class="key-value-pairs" id="headersPairs">
+                    <div class="key-value-pair">
+                        <input type="text" placeholder="Key">
+                        <input type="text" placeholder="Value">
+                        <button class="remove-pair" onclick="removePair(this)">×</button>
+                    </div>
+                </div>
+                <button class="add-pair" onclick="addHeaderPair()">Add Header</button>
+            </div>
+            <div id="auth" class="tab-content">
+                <div class="auth-container">
+                    <div class="auth-selector">
+                        <label for="authType">Auth Type:</label>
+                        <select id="authType" onchange="switchAuthType()">
+                            <option value="noauth">No Auth</option>
+                            <option value="basic">Basic Auth</option>
+                            <option value="bearer">Bearer Token</option>
+                            <option value="apikey">API Key</option>
+                        </select>
+                    </div>
+                    
+                    <div id="noauth-container" class="auth-method-container">
+                        <p>No authentication will be used for this request.</p>
+                    </div>
+                    
+                    <div id="basic-container" class="auth-method-container" style="display: none;">
+                        <div class="auth-field">
+                            <label for="basicUsername">Username:</label>
+                            <input type="text" id="basicUsername" placeholder="Username">
+                        </div>
+                        <div class="auth-field">
+                            <label for="basicPassword">Password:</label>
+                            <input type="password" id="basicPassword" placeholder="Password">
+                        </div>
+                    </div>
+                    
+                    <div id="bearer-container" class="auth-method-container" style="display: none;">
+                        <div class="auth-field">
+                            <label for="bearerToken">Token:</label>
+                            <input type="text" id="bearerToken" placeholder="Bearer token">
+                        </div>
+                    </div>
+                    
+                    <div id="apikey-container" class="auth-method-container" style="display: none;">
+                        <div class="auth-field">
+                            <label for="apikeyName">Key Name:</label>
+                            <input type="text" id="apikeyName" placeholder="API key name">
+                        </div>
+                        <div class="auth-field">
+                            <label for="apikeyValue">Key Value:</label>
+                            <input type="text" id="apikeyValue" placeholder="API key value">
+                        </div>
+                        <div class="auth-field">
+                            <label for="apikeyLocation">Add to:</label>
+                            <select id="apikeyLocation">
+                                <option value="header">Header</option>
+                                <option value="query">Query Params</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="body" class="tab-content">
+                <textarea id="requestBody" style="width: 100%; height: 200px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Request body (JSON, text, etc.)"></textarea>
+            </div>
+        </div>
+        <div class="response-panel" id="responsePanel" style="display: none;">
+            <div class="response-header">
+                <div class="response-status" id="responseStatus"></div>
+                <div class="response-time" id="responseTime"></div>
+            </div>
+            <div class="response-body" id="responseBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for collections and requests
+        let collections = JSON.parse(localStorage.getItem('collections')) || [];
+        let currentCollectionIndex = -1;
+        let currentRequestIndex = -1;
+
+        // Initialize the UI
+        function init() {
+            renderCollections();
+        }
+
+        // Switch between auth types
+        function switchAuthType() {
+            const authType = document.getElementById('authType').value;
+            
+            // Hide all auth containers
+            document.querySelectorAll('.auth-method-container').forEach(container => {
+                container.style.display = 'none';
+            });
+            
+            // Show selected auth container
+            document.getElementById(`${authType}-container`).style.display = 'block';
+        }
+        
+        // Apply authentication to request
+        function applyAuth(headers, url) {
+            const authType = document.getElementById('authType').value;
+            
+            switch(authType) {
+                case 'basic':
+                    const username = document.getElementById('basicUsername').value;
+                    const password = document.getElementById('basicPassword').value;
+                    if (username) {
+                        const base64Credentials = btoa(`${username}:${password}`);
+                        headers['Authorization'] = `Basic ${base64Credentials}`;
+                    }
+                    break;
+                    
+                case 'bearer':
+                    const token = document.getElementById('bearerToken').value;
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    break;
+                    
+                case 'apikey':
+                    const keyName = document.getElementById('apikeyName').value;
+                    const keyValue = document.getElementById('apikeyValue').value;
+                    const keyLocation = document.getElementById('apikeyLocation').value;
+                    
+                    if (keyName && keyValue) {
+                        if (keyLocation === 'header') {
+                            headers[keyName] = keyValue;
+                        } else if (keyLocation === 'query') {
+                            // Add to URL as query parameter
+                            const separator = url.includes('?') ? '&' : '?';
+                            url = `${url}${separator}${encodeURIComponent(keyName)}=${encodeURIComponent(keyValue)}`;
+                        }
+                    }
+                    break;
+            }
+            
+            return { headers, url };
+        }
+
+        // Render collections in the sidebar
+        function renderCollections() {
+            const collectionList = document.getElementById('collectionList');
+            collectionList.innerHTML = '';
+
+            collections.forEach((collection, index) => {
+                const li = document.createElement('li');
+                li.className = 'collection-item';
+                li.innerHTML = `
+                    <div class="collection-header">
+                        <div onclick="toggleCollection(${index})">
+                            <span>📁</span>
+                            <span class="collection-name">${collection.name}</span>
+                        </div>
+                        <div class="collection-actions">
+                            <button class="action-btn" onclick="renameCollection(${index})">✏️</button>
+                            <button class="action-btn" onclick="deleteCollection(${index})">🗑️</button>
+                        </div>
+                    </div>
+                    <ul class="request-list" style="display: none;">
+                        ${collection.requests.map((request, reqIndex) => `
+                            <li class="request-item">
+                                <span class="request-name" onclick="loadRequest(${index}, ${reqIndex})">${request.method} ${request.name}</span>
+                                <button class="delete-request-btn" onclick="deleteRequest(${index}, ${reqIndex})">Delete</button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                collectionList.appendChild(li);
+            });
+        }
+
+        // Create a new collection
+        function createNewCollection() {
+            const name = prompt('Enter collection name:');
+            if (name) {
+                collections.push({
+                    name,
+                    requests: []
+                });
+                saveCollections();
+                renderCollections();
+            }
+        }
+
+        // Rename collection
+        function renameCollection(index) {
+            const newName = prompt('Enter new collection name:', collections[index].name);
+            if (newName) {
+                collections[index].name = newName;
+                saveCollections();
+                renderCollections();
+            }
+        }
+
+        // Delete collection
+        function deleteCollection(index) {
+            if (confirm('Are you sure you want to delete this collection and all its requests?')) {
+                collections.splice(index, 1);
+                saveCollections();
+                renderCollections();
+            }
+        }
+
+        // Delete request
+        function deleteRequest(collectionIndex, requestIndex) {
+            const request = collections[collectionIndex].requests[requestIndex];
+            if (confirm(`Are you sure you want to delete the request "${request.name}"?`)) {
+                collections[collectionIndex].requests.splice(requestIndex, 1);
+                saveCollections();
+                renderCollections();
+                
+                // If the deleted request was currently loaded, clear the form
+                if (currentCollectionIndex === collectionIndex && currentRequestIndex === requestIndex) {
+                    currentCollectionIndex = -1;
+                    currentRequestIndex = -1;
+                    document.getElementById('methodSelect').value = 'GET';
+                    document.getElementById('urlInput').value = '';
+                    document.getElementById('headersPairs').innerHTML = `
+                        <div class="key-value-pair">
+                            <input type="text" placeholder="Key">
+                            <input type="text" placeholder="Value">
+                            <button class="remove-pair" onclick="removePair(this)">×</button>
+                        </div>
+                    `;
+                    document.getElementById('requestBody').value = '';
+                }
+            }
+        }
+
+        // Update current request
+        function updateRequest() {
+            if (currentCollectionIndex === -1 || currentRequestIndex === -1) {
+                alert('Please select a request to update');
+                return;
+            }
+
+            const request = {
+                name: collections[currentCollectionIndex].requests[currentRequestIndex].name,
+                method: document.getElementById('methodSelect').value,
+                url: document.getElementById('urlInput').value,
+                headers: getHeaders(),
+                body: document.getElementById('requestBody').value,
+                auth: {
+                    type: document.getElementById('authType').value,
+                    basic: {
+                        username: document.getElementById('basicUsername').value,
+                        password: document.getElementById('basicPassword').value
+                    },
+                    bearer: {
+                        token: document.getElementById('bearerToken').value
+                    },
+                    apikey: {
+                        name: document.getElementById('apikeyName').value,
+                        value: document.getElementById('apikeyValue').value,
+                        location: document.getElementById('apikeyLocation').value
+                    }
+                }
+            };
+
+            collections[currentCollectionIndex].requests[currentRequestIndex] = request;
+            saveCollections();
+            renderCollections();
+            alert('Request updated successfully!');
+        }
+
+        // Toggle collection expansion
+        function toggleCollection(index) {
+            const requestList = document.querySelectorAll('.request-list')[index];
+            requestList.style.display = requestList.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Load a request
+        function loadRequest(collectionIndex, requestIndex) {
+            currentCollectionIndex = collectionIndex;
+            currentRequestIndex = requestIndex;
+            
+            const request = collections[collectionIndex].requests[requestIndex];
+            document.getElementById('methodSelect').value = request.method;
+            document.getElementById('urlInput').value = request.url;
+            
+            // Load headers
+            const headersPairs = document.getElementById('headersPairs');
+            headersPairs.innerHTML = ''; // Clear existing headers
+            
+            if (request.headers) {
+                Object.entries(request.headers).forEach(([key, value]) => {
+                    const pair = document.createElement('div');
+                    pair.className = 'key-value-pair';
+                    pair.innerHTML = `
+                        <input type="text" placeholder="Key" value="${key}">
+                        <input type="text" placeholder="Value" value="${value}">
+                        <button class="remove-pair" onclick="removePair(this)">×</button>
+                    `;
+                    headersPairs.appendChild(pair);
+                });
+            }
+            
+            // Load body
+            document.getElementById('requestBody').value = request.body || '';
+            
+            // Load auth
+            if (request.auth) {
+                document.getElementById('authType').value = request.auth.type || 'noauth';
+                
+                // Set values based on auth type
+                if (request.auth.basic) {
+                    document.getElementById('basicUsername').value = request.auth.basic.username || '';
+                    document.getElementById('basicPassword').value = request.auth.basic.password || '';
+                }
+                
+                if (request.auth.bearer) {
+                    document.getElementById('bearerToken').value = request.auth.bearer.token || '';
+                }
+                
+                if (request.auth.apikey) {
+                    document.getElementById('apikeyName').value = request.auth.apikey.name || '';
+                    document.getElementById('apikeyValue').value = request.auth.apikey.value || '';
+                    document.getElementById('apikeyLocation').value = request.auth.apikey.location || 'header';
+                }
+                
+                // Show the correct auth container
+                switchAuthType();
+            } else {
+                // Default to no auth
+                document.getElementById('authType').value = 'noauth';
+                switchAuthType();
+            }
+        }
+
+        // Send the request
+        async function sendRequest() {
+            const method = document.getElementById('methodSelect').value;
+            let url = document.getElementById('urlInput').value;
+            let headers = getHeaders();
+            const body = document.getElementById('requestBody').value;
+
+            // Apply authentication
+            const authResult = applyAuth(headers, url);
+            headers = authResult.headers;
+            url = authResult.url;
+
+            const responsePanel = document.getElementById('responsePanel');
+            const responseStatus = document.getElementById('responseStatus');
+            const responseBody = document.getElementById('responseBody');
+            const responseTime = document.getElementById('responseTime');
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: headers,
+                    body: method !== 'GET' ? body : undefined
+                });
+
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                responsePanel.style.display = 'block';
+                responseStatus.textContent = `${response.status} ${response.statusText}`;
+                responseStatus.className = `response-status ${response.ok ? 'success' : 'error'}`;
+                responseTime.textContent = `${duration}ms`;
+
+                const responseData = await response.text();
+                try {
+                    // Try to parse and pretty print JSON
+                    const jsonData = JSON.parse(responseData);
+                    responseBody.textContent = JSON.stringify(jsonData, null, 2);
+                } catch {
+                    // If not JSON, display as is
+                    responseBody.textContent = responseData;
+                }
+            } catch (error) {
+                responsePanel.style.display = 'block';
+                responseStatus.textContent = 'Error';
+                responseStatus.className = 'response-status error';
+                responseBody.textContent = error.message;
+            }
+        }
+
+        // Helper functions
+        function getHeaders() {
+            const headers = {};
+            document.querySelectorAll('#headersPairs .key-value-pair').forEach(pair => {
+                const [keyInput, valueInput] = pair.querySelectorAll('input');
+                if (keyInput.value) {
+                    headers[keyInput.value] = valueInput.value;
+                }
+            });
+            return headers;
+        }
+
+        function addHeaderPair() {
+            const headersPairs = document.getElementById('headersPairs');
+            const pair = document.createElement('div');
+            pair.className = 'key-value-pair';
+            pair.innerHTML = `
+                <input type="text" placeholder="Key">
+                <input type="text" placeholder="Value">
+                <button class="remove-pair" onclick="removePair(this)">×</button>
+            `;
+            headersPairs.appendChild(pair);
+        }
+
+        function removePair(button) {
+            button.parentElement.remove();
+        }
+
+        function switchTab(event, tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function saveCollections() {
+            localStorage.setItem('collections', JSON.stringify(collections));
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
